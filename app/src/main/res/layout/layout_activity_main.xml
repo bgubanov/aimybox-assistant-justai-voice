@@ -6,11 +6,31 @@
     android:orientation="vertical">
 
     <ImageView
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_gravity="center"
+        android:src="@drawable/app_icon"
+        android:layout_marginBottom="50dp"/>
+
+    <RadioGroup
+        android:id="@+id/bot_group"
+        android:visibility="invisible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        >
+        <RadioButton
+            android:id="@+id/first_bot"
             android:layout_width="wrap_content"
-            android:layout_height="200dp"
-            android:layout_gravity="center"
-            android:layout_marginBottom="100dp"
-            android:src="@mipmap/logo"/>
+            android:layout_height="wrap_content"
+            android:focusedByDefault="true"
+            android:text="Первый бот"/>
+        <RadioButton
+            android:id="@+id/second_bot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Второй бот"/>
+    </RadioGroup>
 
     <TextView
         android:layout_width="wrap_content"

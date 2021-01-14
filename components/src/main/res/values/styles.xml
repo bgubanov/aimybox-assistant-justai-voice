@@ -21,8 +21,14 @@
         <item name="aimybox_buttonMarginBottom">36dp</item>
         <item name="aimybox_buttonElevation">6dp</item>
         <item name="aimybox_buttonGravity">end|bottom</item>
+        <item name="aimybox_buttonTextInputSize">56dp</item>
+        <item name="aimybox_buttonTextInputMarginStart">30dp</item>
+        <item name="aimybox_buttonTextInputMarginBottom">36dp</item>
+        <item name="aimybox_buttonTextInputColor">@color/white</item>
+        <item name="aimybox_buttonTextInputGravity">start|bottom</item>
         <item name="aimybox_startRecordingDrawable">@drawable/icon_mic</item>
         <item name="aimybox_stopRecordingDrawable">@drawable/icon_stop</item>
+        <item name="aimybox_textInputDrawable">@drawable/ic_text_input</item>
     </style>
 
     <style name="DefaultAssistantTheme.Widget" />

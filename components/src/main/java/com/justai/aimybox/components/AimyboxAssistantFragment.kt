@@ -11,10 +11,13 @@ import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.textfield.TextInputEditText
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.components.adapter.AimyboxAssistantAdapter
 import com.justai.aimybox.components.extensions.isPermissionGranted
@@ -39,6 +42,9 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
     private lateinit var viewModel: AimyboxAssistantViewModel
     private lateinit var recycler: RecyclerView
     private lateinit var aimyboxButton: AimyboxButton
+
+    private lateinit var textInputEditText: TextInputEditText
+    private lateinit var textInputButton: ImageView
 
     private lateinit var adapter: AimyboxAssistantAdapter
     private var revealTimeMs = 0L
@@ -75,6 +81,8 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
         view.apply {
             recycler = findViewById(R.id.fragment_aimybox_assistant_recycler)
             aimyboxButton = findViewById(R.id.fragment_aimybox_assistant_button)
+            textInputEditText = findViewById(R.id.assistant_edit_text)
+            textInputButton = findViewById(R.id.text_input_button)
             aimyboxButton.setOnClickListener(::onAimyboxButtonClick)
         }
 
@@ -83,7 +91,11 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
 
         viewModel.isAssistantVisible.observe(viewLifecycleOwner, Observer { isVisible ->
             coroutineContext.cancelChildren()
-            if (isVisible) aimyboxButton.expand() else aimyboxButton.collapse()
+            if (isVisible) aimyboxButton.expand() else {
+                textInputEditText.visibility = View.GONE
+                textInputButton.visibility = View.VISIBLE
+                aimyboxButton.collapse()
+            }
         })
 
         viewModel.aimyboxState.observe(viewLifecycleOwner, Observer { state ->
@@ -107,12 +119,43 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
                 context?.startActivityIfExist(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             }
         }
+
+        textInputButton.setOnClickListener {
+            textInputButton.visibility = View.GONE
+            textInputEditText.visibility = View.VISIBLE
+            viewModel.aimybox.standby()
+        }
+
+        textInputEditText.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_GO) {
+                val text = textInputEditText.text?.toString()
+                if (text?.isBlank() == false) {
+                    sendSilentAimyboxRequest(text)
+                    textInputEditText.setText("")
+                    return@setOnEditorActionListener true
+                }
+            }
+            return@setOnEditorActionListener false
+        }
     }
 
     @SuppressLint("MissingPermission")
     private fun onAimyboxButtonClick(view: View) {
         if (requireContext().isPermissionGranted(Manifest.permission.RECORD_AUDIO)) {
             viewModel.onAssistantButtonClick()
+        } else {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_PERMISSION_CODE)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun sendSilentAimyboxRequest(query: String) {
+        if (requireContext().isPermissionGranted(Manifest.permission.RECORD_AUDIO)) {
+            launch {
+                viewModel.aimybox.sendRequest(query).join()
+                delay(200)
+                viewModel.aimybox.standby()
+            }
         } else {
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_PERMISSION_CODE)
         }
