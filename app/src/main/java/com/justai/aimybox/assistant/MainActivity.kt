@@ -85,7 +85,15 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         Snackbar.make(
             findViewById(R.id.assistant_container),
             "Работа приложения невозможна без предоставления разрешений", Snackbar.LENGTH_INDEFINITE
-        )
+        ).apply {
+            setAction("Предоставить") {
+                ActivityCompat.requestPermissions(
+                    this@MainActivity,
+                    arrayOf(Manifest.permission.RECORD_AUDIO),
+                    REQUEST_CODE_AUDIO
+                )
+            }
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -100,13 +108,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 initAimybox()
                 snackbarRequestPermissions.dismiss()
             } else {
-                snackbarRequestPermissions.setAction("Предоставить") {
-                    ActivityCompat.requestPermissions(
-                        this,
-                        arrayOf(Manifest.permission.RECORD_AUDIO),
-                        REQUEST_CODE_AUDIO
-                    )
-                }
                 snackbarRequestPermissions.show()
             }
         }
