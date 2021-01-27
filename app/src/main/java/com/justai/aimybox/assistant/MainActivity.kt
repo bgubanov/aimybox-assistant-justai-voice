@@ -1,69 +1,68 @@
 package com.justai.aimybox.assistant
 
 import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.justai.aimybox.api.aimybox.AimyboxDialogApi
-import com.justai.aimybox.assistant.skills.AlarmSkill
-import com.justai.aimybox.assistant.skills.ReminderSkill
-import com.justai.aimybox.assistant.skills.SettingsSkill
-import com.justai.aimybox.assistant.skills.TimerSkill
+import com.google.android.material.snackbar.Snackbar
 import com.justai.aimybox.components.AimyboxAssistantFragment
 import com.justai.aimybox.components.extensions.isPermissionGranted
 import com.justai.aimybox.core.Config
 import kotlinx.android.synthetic.main.layout_activity_main.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import java.util.*
+import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
 class MainActivity : AppCompatActivity(), CoroutineScope {
 
+    companion object {
+        const val REQUEST_CODE_AUDIO = 100
+    }
+
     override val coroutineContext: CoroutineContext = Dispatchers.Default + Job()
 
-    private var lastCheckedBotId = R.id.first_bot
+    val Activity.app
+        get() = (application as AimyboxApplication)
 
+    @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.layout_activity_main)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        val assistantFragment = AimyboxAssistantFragment()
+        withAudioPermission {
+            initAimybox()
+        }
+    }
 
+
+    private fun initTextFields() {
+        triggers_1.setText(app.marusyaTriggers.joinToString())
+        triggers_2.setText(app.solarTriggers.joinToString())
+        button_submit.setOnClickListener {
+            val marusya = triggers_1.text.split(", ", " ", ",").filter { it.isNotBlank() }
+            val solar = triggers_2.text.split(", ", " ", ",").filter { it.isNotBlank() }
+            launch {
+                app.updateTriggerWords(marusya, solar).join()
+                Toast.makeText(this@MainActivity, "Триггеры обновлены", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    @ExperimentalCoroutinesApi
+    private fun initAimybox() {
+        val assistantFragment = AimyboxAssistantFragment()
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.assistant_container, assistantFragment)
             commit()
         }
-
-        /*bot_group.check(R.id.first_bot)
-        bot_group.setOnCheckedChangeListener { _, checkedId ->
-            if (lastCheckedBotId == checkedId) return@setOnCheckedChangeListener
-            lastCheckedBotId = checkedId
-            val app = application as? AimyboxApplication ?: return@setOnCheckedChangeListener
-            when(checkedId) {
-                R.id.first_bot -> {
-                    launch {
-                        app.aimybox.updateConfiguration(app.firstAimyboxConfig)
-                    }
-                }
-                else -> {
-                    launch {
-                        app.aimybox.updateConfiguration(app.secondAimyboxConfig)
-                    }
-                }
-            }
-            Toast.makeText(this, "Подождите, зовём другого бота", Toast.LENGTH_SHORT).show()
-        }*/
-        withAudioPermission {
-            (application as? AimyboxApplication)?.listenTriggers()
-        }
+        (application as? AimyboxApplication)?.listenTriggers()
+        initTextFields()
     }
 
     override fun onBackPressed() {
@@ -77,7 +76,38 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             action()
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 100)
+                requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_CODE_AUDIO)
+            }
+        }
+    }
+
+    private val snackbarRequestPermissions by lazy {
+        Snackbar.make(
+            findViewById(R.id.assistant_container),
+            "Работа приложения невозможна без предоставления разрешений", Snackbar.LENGTH_INDEFINITE
+        )
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == REQUEST_CODE_AUDIO
+            && permissions.firstOrNull() == Manifest.permission.RECORD_AUDIO
+        ) {
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                initAimybox()
+                snackbarRequestPermissions.dismiss()
+            } else {
+                snackbarRequestPermissions.setAction("Предоставить") {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.RECORD_AUDIO),
+                        REQUEST_CODE_AUDIO
+                    )
+                }
+                snackbarRequestPermissions.show()
             }
         }
     }

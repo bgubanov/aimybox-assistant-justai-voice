@@ -79,5 +79,6 @@ dependencies {
 //    implementation("com.justai.aimybox:pocketsphinx-speechkit:$aimyboxVersion")
 //    implementation("com.justai.aimybox:kaldi-speechkit:$aimyboxVersion")
     implementation(project(":kaldi-speechkit"))
+    implementation(project(":justai-speechkit"))
 //    implementation("com.justai.aimybox:pocketsphinx-android-lib:1.0.0")
 }

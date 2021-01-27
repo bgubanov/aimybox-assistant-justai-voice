@@ -12,8 +12,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class KaldiVoiceTrigger(
     assets: KaldiAssets,
-    private val phrases: Collection<String>
+    _phrases: Collection<String>
 ) : VoiceTrigger, CoroutineScope {
+
+    var phrases = _phrases
+        private set
 
     private val job = Job()
     override val coroutineContext = Dispatchers.IO + job
@@ -55,6 +58,20 @@ class KaldiVoiceTrigger(
             isListening.set(false)
             L.i("Kaldi voice trigger was stopped")
         }
+    }
+
+    override fun destroy() {
+        recognizer?.run {
+            cancel()
+            shutdown()
+            isListening.set(false)
+            L.i("Kaldi voice trigger was stopped")
+        }
+        super.destroy()
+    }
+
+    fun updateTriggers(triggers: Collection<String>) {
+        phrases = triggers
     }
 
     internal class RecognizerListener(
