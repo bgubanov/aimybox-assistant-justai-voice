@@ -19,9 +19,7 @@ class AimyboxApplication : Application(), AimyboxProvider, CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default + Job()
 
     companion object {
-        private const val AIMYBOX_API_KEY = ""
-        private const val AIMYBOX_WEBHOOK_URL_1 =
-            "https://bot.jaicp.com/chatapi/webhook/zenbox/RFJNzBSV:558ae815755abc93cf9da60d2258d8366c57edee"
+        private const val AIMYBOX_API_KEY = "Ldf0j7WZi3KwNah2aNeXVIACz0lb9qMH"
     }
 
     private val speechToText = GooglePlatformSpeechToText(this, Locale("RU"))
@@ -41,9 +39,7 @@ class AimyboxApplication : Application(), AimyboxProvider, CoroutineScope {
     val aimyboxConfig by lazy {
         val unitId = UUID.randomUUID().toString()
 
-        val dialogApi = AimyboxDialogApi(
-            AIMYBOX_API_KEY, unitId, AIMYBOX_WEBHOOK_URL_1
-        )
+        val dialogApi = AimyboxDialogApi(AIMYBOX_API_KEY, unitId)
 
         Config.create(speechToText, textToSpeech, dialogApi)
     }
