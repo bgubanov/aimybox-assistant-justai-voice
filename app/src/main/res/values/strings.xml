@@ -2,4 +2,10 @@
     <string name="app_name">Aimybox Assistant</string>
     <string name="prompt">Your assistant is ready! Tap on button below to start recognition.</string>
     <string name="initial_phrase">How can I help you?</string>
+    <string name="choose_voice">Выберите голос:</string>
+    <string-array name="voices">
+        <item>Женский</item>
+        <item>Мужской</item>
+        <item>Геральт</item>
+    </string-array>
 </resources>

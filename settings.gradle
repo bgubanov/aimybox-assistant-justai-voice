@@ -2,5 +2,4 @@ rootProject.buildFileName = "build.gradle.kts"
 
 include(':app')
 include(":components")
-include(":kaldi-speechkit")
 include(":justai-speechkit")

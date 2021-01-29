@@ -5,14 +5,15 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
-import android.widget.Toast
+import android.widget.AdapterView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.material.snackbar.Snackbar
 import com.justai.aimybox.components.AimyboxAssistantFragment
 import com.justai.aimybox.components.extensions.isPermissionGranted
-import com.justai.aimybox.core.Config
+import com.justai.aimybox.speechkit.justai.JustAiTextToSpeech.Config.Voice
 import kotlinx.android.synthetic.main.layout_activity_main.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
@@ -28,41 +29,34 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     val Activity.app
         get() = (application as AimyboxApplication)
 
-    @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.layout_activity_main)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        withAudioPermission {
-            initAimybox()
-        }
-    }
-
-
-    private fun initTextFields() {
-        triggers_1.setText(app.marusyaTriggers.joinToString())
-        triggers_2.setText(app.solarTriggers.joinToString())
-        button_submit.setOnClickListener {
-            val marusya = triggers_1.text.split(", ", " ", ",").filter { it.isNotBlank() }
-            val solar = triggers_2.text.split(", ", " ", ",").filter { it.isNotBlank() }
-            launch {
-                app.updateTriggerWords(marusya, solar).join()
-                Toast.makeText(this@MainActivity, "Триггеры обновлены", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    @ExperimentalCoroutinesApi
-    private fun initAimybox() {
         val assistantFragment = AimyboxAssistantFragment()
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.assistant_container, assistantFragment)
             commit()
         }
-        (application as? AimyboxApplication)?.listenTriggers()
-        initTextFields()
+
+        spinner_voice.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?, view: View?, position: Int, id: Long
+            ) {
+                val newVoice = when (position) {
+                    0 -> Voice.WOMAN_1
+                    1 -> Voice.MAN_1
+                    else -> Voice.GERALT
+                }
+                app.changeVoice(newVoice)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                spinner_voice.setSelection(0)
+            }
+        }
     }
 
     override fun onBackPressed() {
@@ -105,7 +99,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             && permissions.firstOrNull() == Manifest.permission.RECORD_AUDIO
         ) {
             if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
-                initAimybox()
                 snackbarRequestPermissions.dismiss()
             } else {
                 snackbarRequestPermissions.show()
